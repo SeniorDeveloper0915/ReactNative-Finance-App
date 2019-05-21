@@ -24,9 +24,6 @@ var StockStore = require('../../Utils/Stock/store');
 // View Elements
 var StockCell = require('./Elements/StockCell');
 
-// Views
-var WebView = require('../Web');
-
 // Styles
 var styles = require('./style');
 
