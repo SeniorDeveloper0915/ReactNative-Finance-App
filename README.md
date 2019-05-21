@@ -2,7 +2,7 @@
 
 iOS's stock app clone written in [React Native](https://github.com/facebook/react-native) for demo purpose.
 
-![Preview](https://raw.github.com/SeniorDeveloper0915/FinanceReactNative/master/preview.gif)
+![Preview](https://raw.github.com/7kfpun/FinanceReactNative/master/preview.gif)
 
 ## Plugins used
 
@@ -16,7 +16,7 @@ iOS's stock app clone written in [React Native](https://github.com/facebook/reac
 
 ## Running
 
-* Clone this repo `git clone git@github.com:SeniorDeveloper0915/FinanceReactNative.git`
+* Clone this repo `git clone git@github.com:7kfpun/FinanceReactNative.git`
 * `cd FinanceReactNative`
 * run `npm install`
 * Open `Finance.xcodeproj` in `XCode`
