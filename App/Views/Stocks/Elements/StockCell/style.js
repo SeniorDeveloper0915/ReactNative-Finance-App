@@ -29,6 +29,7 @@ module.exports = StyleSheet.create({
   },
   symbolText: {
     fontSize: 16,
+    marginBottom: 10,
     color: 'white',
     textAlign: 'left',
     marginTop: 10,
@@ -40,6 +41,7 @@ module.exports = StyleSheet.create({
   },
   priceText: {
     fontSize: 16,
+    marginBottom: 10,
     color: 'white',
     textAlign: 'right',
     marginTop: 10,
