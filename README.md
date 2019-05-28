@@ -7,6 +7,9 @@
 
 iOS's Stocks App clone written in [React Native](https://github.com/facebook/react-native) for demo purpose (available both iOS and Android). Data is pulled from [Yahoo Finance](finance.yahoo.com).
 
+![Preview](https://raw.github.com/7kfpun/FinanceReactNative/master/previewIOS.gif)
+![Preview](https://raw.github.com/7kfpun/FinanceReactNative/master/previewAndroid.gif)
+
 ## Plugins used
 
 * [react-native-navbar](https://github.com/Kureev/react-native-navbar): Simple customizable navbar component for react-native.
