@@ -1,22 +1,20 @@
-/* @flow */
-'use strict';
-
-import React, {
+import React from 'react';
+import {
+  StyleSheet,
   Text,
   View,
 } from 'react-native';
 
-// Styles
-import styles from './style';
+export default class DetailsPage extends React.Component {
+  constructor(props) {
+    super(props);
 
-var DetailsPage = React.createClass({
-  getInitialState: function() {
-    return {
+    this.state = {
       timeSpan: '1D',
     };
-  },
+  }
 
-  render: function() {
+  render() {
     return (
       <View style={styles.container}>
         <View style={styles.nameBlock}>
@@ -126,7 +124,63 @@ var DetailsPage = React.createClass({
         </View>
       </View>
     );
+  }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingLeft: 10,
+    paddingRight: 10,
+  },
+  nameBlock: {
+    flex: 1,
+    paddingTop: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nameText: {
+    fontWeight: 'bold',
+    fontSize: 12,
+    color: 'white',
+  },
+  details: {
+    flex: 5,
+    flexDirection: 'column',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: 'white',
+  },
+  detailsRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  detailsRowColumn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingLeft: 5,
+    paddingRight: 5,
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'white',
+  },
+  separatorThin: {
+    height: StyleSheet.hairlineWidth / 2,
+    backgroundColor: '#A6A6A6',
+  },
+  propertyText: {
+    fontSize: 12,
+    color: '#A6A6A6',
+    textAlign: 'left',
+  },
+  valueText: {
+    fontSize: 15,
+    color: 'white',
+    textAlign: 'right',
   },
 });
-
-module.exports = DetailsPage;

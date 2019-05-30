@@ -1,123 +1,116 @@
-/* @flow */
-'use strict';
-
-import React, {
+import React from 'react';
+import {
+  Linking,
   ListView,
   Platform,
-  PullToRefreshViewAndroid,
   Text,
   TouchableHighlight,
+  StyleSheet,
   View,
-  ViewPagerAndroid,
+  RefreshControl,
 } from 'react-native';
+
+// Flux
+import StockActions from '../../actions/stock-action';
+import StockStore from '../../stores/stock-store';
 
 // 3rd party libraries
 import { Actions } from 'react-native-router-flux';
+import { IndicatorViewPager, PagerDotIndicator } from 'rn-viewpager';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import RefreshableListView from 'react-native-refreshable-listview';
-import ViewPager from 'react-native-viewpager';
-
-// Flux
-import Reflux from 'reflux';
-import StockActions from '../../Utils/Stock/actions';
-import StockStore from '../../Utils/Stock/store';
 
 // View Elements
-import StockCell from './Elements/StockCell';
-import ChartsPage from './Elements/ChartsPage';
-import DetailsPage from './Elements/DetailsPage';
-import NewsPage from './Elements/NewsPage';
+import StockCell from './elements/stock-cell';
+import ChartPage from './elements/chart-page';
+import DetailsPage from './elements/details-page';
 
-// Styles
-import styles from './style';
+export default class Main extends React.Component {
+  constructor(props) {
+    super(props);
 
-var ViewReactClass = React.createClass({
-  mixins: [Reflux.ListenerMixin],
-
-  onUpdateStocks: function(watchlist: Array<Object>, result: Array<Object>) {
-    this.updateRows(watchlist, result);
-  },
-
-  onDeleteStock: function(watchlist: Array<Object>, result: Array<Object>) {
-    this.updateRows(watchlist, result);
-  },
-
-  getInitialState: function() {
-    var viewPagerDataSource = new ViewPager.DataSource({pageHasChanged: (p1, p2) => p1 !== p2});
-
-    return {
+    this.state = Object.assign({
       dataSource: new ListView.DataSource({rowHasChanged: (row1, row2) => row1 !== row2}),
       loaded: false,
-      dataSourcePage: viewPagerDataSource.cloneWithPages(['DETAILS', 'CHARTS', 'NEWS']),
-    };
-  },
+      refreshing: false,
+      key: Math.random(),
+    }, StockStore.getState());
+  }
 
-  componentDidMount: function() {
-    this.listenTo(StockStore, this.onUpdateStocks);
-    this.listenTo(StockStore, this.onDeleteStock);
+  componentDidMount() {
+    StockStore.listen((state) => this.onStockStoreChange(state));
 
     StockActions.updateStocks();
-  },
+  }
 
-  updateRows: function(watchlist: Array<Object>, result: Array<Object>) {
+  componentWillUnmount() {
+    StockStore.unlisten((state) => this.onStockStoreChange(state));
+  }
+
+  onStockStoreChange(state) {
     this.setState({
-      dataSource: this.state.dataSource.cloneWithRows(watchlist),
-      loaded: true,
-      selectedStock: this.state.selectedStock || watchlist[0],
-      watchlistResult: result,
+      dataSource: this.state.dataSource.cloneWithRows(state.watchlist),
+      watchlistResult: state.watchlistResult,
+      selectedProperty: state.selectedProperty,
+      selectedStock: state.selectedStock,
+      key: Math.random(),
     });
-    console.log('updateRows', this.state.loaded);
-  },
+  }
 
-  render: function() {
-    if (!this.state.loaded) {
-      return (
-        <View style={styles.container}>
-          <Text>Loading...</Text>
-        </View>
-      );
-    }
+  _onRefresh() {
+    this.setState({refreshing: true});
+    StockActions.updateStocks();
+    this.setState({refreshing: false});
+  }
 
+  _renderDotIndicator() {
     return (
-      this.renderListView()
+      <PagerDotIndicator
+        pageCount={3}
+      />
     );
-  },
+  }
 
-  renderListView: function() {
+  render() {
     return (
       <View style={styles.container}>
+        {Platform.OS === 'ios' && <View style={styles.statusBar} />}
         <View style={styles.stocksBlock}>
-          {(() => {
-            switch (Platform.OS) {
-              case 'ios':       return <RefreshableListView
-                                          dataSource={this.state.dataSource}
-                                          loadData={() => StockActions.updateStocks()}
-                                          renderRow={(stock) => <StockCell onSelect={() => this.setState({selectedStock: stock})} stock={stock}/>}
-                                        />;
-              case 'android':   return <PullToRefreshViewAndroid
-                                          onRefresh={() => StockActions.updateStocks()}>
-                                          <ListView
-                                            dataSource={this.state.dataSource}
-                                            renderRow={(stock) => <StockCell onSelect={() => this.setState({selectedStock: stock})} stock={stock}/>}
-                                          />
-                                        </PullToRefreshViewAndroid>;
-              default:          return null;
+          <ListView
+            key={this.state.key}
+            refreshControl={
+              <RefreshControl
+                refreshing={this.state.refreshing}
+                onRefresh={this._onRefresh.bind(this)}
+              />
             }
-          })()}
+            dataSource={this.state.dataSource}
+            renderRow={(stock) => <StockCell stock={stock} watchlistResult={this.state.watchlistResult} />}
+          />
         </View>
         <View style={styles.detailedBlock}>
-          {(() => {
-            switch (Platform.OS) {
-              case 'ios':       return this.renderViewPagerIOS();
-              case 'android':   return this.renderViewPagerAndroid();
-              default:          return null;
-            }
-          })()}
+          <IndicatorViewPager
+            style={{flex: 1}}
+            indicator={this._renderDotIndicator()}
+          >
+            <View>
+              <DetailsPage stock={this.state.selectedStock} watchlistResult={this.state.watchlistResult} />
+            </View>
+            <View>
+              <ChartPage stock={this.state.selectedStock} watchlistResult={this.state.watchlistResult} />
+            </View>
+            <View style={{flex: 1, justifyContent: 'center'}}>
+              <Text style={{fontSize: 15, color: 'white', textAlign: 'center'}}>
+                {'Under construction (Stock: ' + this.state.selectedStock.symbol + ')'}
+              </Text>
+            </View>
+          </IndicatorViewPager>
         </View>
         <View style={styles.footerBlock}>
           <TouchableHighlight
             style={styles.yahoo}
-            onPress={() => this.openPage()}
+            onPress={() => Linking.openURL(
+              'http://finance.yahoo.com/q?s=' + this.state.selectedStock.symbol
+            ).catch(err => console.error('An error occurred', err))}
             underlayColor="#202020">
             <Text style={styles.yahooText}>
               Yahoo!
@@ -130,65 +123,73 @@ var ViewReactClass = React.createClass({
           </View>
           <TouchableHighlight
             style={styles.settings}
-            onPress={() => this.pushSettingsView()}
+            onPress={Actions.settings}
             underlayColor="#202020">
             <Icon name="menu" color="white" size={22} />
           </TouchableHighlight>
         </View>
       </View>
     );
-  },
+  }
+}
 
-  renderViewPagerAndroid: function() {
-    return (
-      <ViewPagerAndroid
-        style={{flex: 1}}
-        initialPage={0}>
-        <View>
-          <DetailsPage stock={this.state.selectedStock} watchlistResult={this.state.watchlistResult} />
-        </View>
-        <View>
-          <ChartsPage stock={this.state.selectedStock} />
-        </View>
-        <View>
-          <NewsPage stock={this.state.selectedStock} />
-        </View>
-      </ViewPagerAndroid>
-    );
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'space-between',
+    backgroundColor: 'black',
   },
-
-  renderViewPagerIOS: function() {
-    return (
-      <ViewPager
-        dataSource={this.state.dataSourcePage}
-        renderPage={this._renderPage}
-        isLoop={true}
-        autoPlay={false} />
-    );
+  statusBar: {
+    height: 20,
   },
-
-  _renderPage: function(data: Object, pageID: number | string) {
-    return (
-      <View style={{flex: 1}}>
-        {(() => {
-          switch (data) {
-            case 'DETAILS':     return <DetailsPage stock={this.state.selectedStock} watchlistResult={this.state.watchlistResult} />;
-            case 'CHARTS':      return <ChartsPage stock={this.state.selectedStock} />;
-            case 'NEWS':        return <NewsPage stock={this.state.selectedStock} />;
-            default:            return <NewsPage stock={this.state.selectedStock} />;
-          }
-        })()}
-      </View>
-    );
+  stocksBlock: {
+    flexDirection: 'column',
+    flex: 9,
   },
-
-  pushSettingsView: function() {
-    Actions.settings();
+  detailedBlock: {
+    flex: 5,
+    backgroundColor: '#202020',
+    justifyContent: 'space-between',
   },
-
-  openPage: function() {
-    Actions.web({url: 'http://finance.yahoo.com/q?s=' + this.state.selectedStock.symbol});
+  footerBlock: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#202020',
+    alignItems: 'center',
+    paddingLeft: 10,
+    paddingRight: 10,
+  },
+  loadingText: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: 40,
+    marginBottom: 10,
+    marginRight: 10,
+    color: 'white',
+  },
+  yahoo: {
+    flex: 1,
+  },
+  yahooText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'left',
+  },
+  footerMiddle: {
+    flex: 1,
+  },
+  marketTimeText: {
+    fontSize: 12,
+    color: '#A6A6A6',
+    textAlign: 'center',
+  },
+  settings: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  icon: {
+    width: 20,
+    height: 20,
   },
 });
-
-module.exports = ViewReactClass;
